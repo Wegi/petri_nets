@@ -35,10 +35,32 @@
   (def newnet (assoc (netname @net-db) :transitions newtrans))
   (swap! net-db assoc netname newnet))
 
+(defn placenames [net]
+  "Get a list of the placenames in 'net'"
+  (map (fn [[placename x]] placename) (:places (net @net-db))))
+
+(defn trans [net]
+  "Easy access sugar to get transitions from a net"
+  (:transitions (net @net-db)))
+
+(defn add-edge [net from to tokens]
+  "Add a new edge. Does nothing if target or origin are invalid."
+  (if (and (from (trans net)) (some #{to} (placenames net)))
+    (do
+      (def newnet (assoc (net @net-db) :edges_out (conj (:edges_out (net @net-db)) (list from to tokens))))
+      (swap! net-db assoc net newnet))
+    (if (and (some #{from} (placenames net)) (to (trans net)))
+      (do
+        (def newnet (assoc (net @net-db) :edges_in (conj (:edges_in (net @net-db)) (list from to tokens))))
+        (swap! net-db assoc net newnet)))))
+
+
 
 ;; Manual testing Area
 (clear-db)
 (create-net :test)
 @net-db
-(add-place :test :wegi 24)
+(add-place :test :wgi 24)
 (add-transition :test :t2)
+(add-edge :test :t2 :wgi 5)
+(add-edge :test :wgi :t2 7)
