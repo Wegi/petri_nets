@@ -47,20 +47,37 @@
   "Add a new edge. Does nothing if target or origin are invalid."
   (if (and (from (trans net)) (some #{to} (placenames net)))
     (do
-      (def newnet (assoc (net @net-db) :edges_out (conj (:edges_out (net @net-db)) (list from to tokens))))
+      (def newnet (assoc (net @net-db) :edges_out (conj (:edges_out (net @net-db)) (vector from to tokens))))
       (swap! net-db assoc net newnet))
     (if (and (some #{from} (placenames net)) (to (trans net)))
       (do
-        (def newnet (assoc (net @net-db) :edges_in (conj (:edges_in (net @net-db)) (list from to tokens))))
+        (def newnet (assoc (net @net-db) :edges_in (conj (:edges_in (net @net-db)) (vector from to tokens))))
         (swap! net-db assoc net newnet)))))
 
+(defn save-net [net file]
+  "Save 'net' to 'file'"
+  (spit file (net @net-db)))
 
+(defn save-all [file]
+  "Saves all nets to file"
+  (spit file @net-db))
 
+(defn load-net [file net]
+  "Load the net from 'file' and save it in the net-databse as 'net'"
+  (swap! net-db assoc net (load-string (slurp file))))
+
+(defn load-all [file]
+  "Loads all nets contained in 'file' and replaces the net-database with them"
+  (reset! net-db (load-string (slurp file))))
 ;; Manual testing Area
 (clear-db)
 (create-net :test)
 @net-db
-(add-place :test :wgi 24)
+(add-place :test :gi 24)
 (add-transition :test :t2)
 (add-edge :test :t2 :wgi 5)
 (add-edge :test :wgi :t2 7)
+(save-net :test "out.txt")
+(load-net "out.txt" :test)
+(save-all "out.txt")
+(load-all "out.txt")
