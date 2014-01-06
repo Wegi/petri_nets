@@ -6,69 +6,79 @@
 
 (def net-db (atom {}))
 
-(defn clear-db []
+(defn clear-db
   "Reset the net-database"
+  []
   (reset! net-db {}))
 
-(defn create-net [name]
+(defn create-net
   "Create a new empty net 'name'"
-  (def empty-net {:places {}
-                  :transitions #{}
-                  :edges_in #{}
-                  :edges_out #{}})
-  (swap! net-db assoc name empty-net))
+  [name]
+  (swap! net-db assoc name {:places {}
+                            :transitions #{}
+                            :edges_in #{}
+                            :edges_out #{}}))
 
-(defn add-place [netname pname tokens]
+(defn add-place
   "Add a place 'pname' with tokens many tokens into 'netname'"
-  (def net (netname @net-db))
-  (def newplaces (assoc (:places net) pname tokens))
-  (def newnet (assoc net :places newplaces))
-  (swap! net-db assoc netname newnet))
+  [netname pname tokens]
+  (let [newplaces (assoc (:places (@net-db netname)) pname tokens)
+        newnet (assoc net :places newplaces)]
+    (swap! net-db assoc netname newnet)))
 
-(defn change-tokens [netname pname tokens]
-  "Change number of tokens in the place 'pname' in the net 'netname'"
-  (add-place netname pname tokens)) ;same operation as add-place as places are unique
+(defn change-tokens
+  "Change number of tokens in the place 'pname' in the net 'netname'. Syntactic Sugar"
+  [netname pname tokens]
+  (add-place netname pname tokens))
 
-(defn add-transition [netname tname]
+(defn add-transition
   "Add a transition 'tname' to the net 'netname'"
-  (def newtrans (conj (:transitions (netname @net-db)) tname))
-  (def newnet (assoc (netname @net-db) :transitions newtrans))
-  (swap! net-db assoc netname newnet))
+  [netname tname]
+  (let [newtrans (conj (:transitions (netname @net-db)) tname)
+        newnet (assoc (netname @net-db) :transitions newtrans)]
+    (swap! net-db assoc netname newnet)))
 
-(defn placenames [net]
+(defn placenames
   "Get a list of the placenames in 'net'"
+  [net]
   (map (fn [[placename x]] placename) (:places (net @net-db))))
 
-(defn trans [net]
+(defn trans
   "Easy access sugar to get transitions from a net"
+  [net]
   (:transitions (net @net-db)))
 
-(defn add-edge [net from to tokens]
+(defn add-edge
   "Add a new edge. Does nothing if target or origin are invalid."
+  [net from to tokens]
   (if (and (from (trans net)) (some #{to} (placenames net)))
-    (do
-      (def newnet (assoc (net @net-db) :edges_out (conj (:edges_out (net @net-db)) (vector from to tokens))))
-      (swap! net-db assoc net newnet))
+    (swap! net-db assoc
+           net (merge-with clojure.set/union (@net-db net) {:edges_out #{[from to tokens]}}))
     (if (and (some #{from} (placenames net)) (to (trans net)))
-      (do
-        (def newnet (assoc (net @net-db) :edges_in (conj (:edges_in (net @net-db)) (vector from to tokens))))
-        (swap! net-db assoc net newnet)))))
+      (swap! net-db assoc
+             net (merge-with clojure.set/union (@net-db net) {:edges_in #{[from to tokens]}})))))
 
-(defn save-net [net file]
+(defn save-net
   "Save 'net' to 'file'"
+  [net file]
   (spit file (net @net-db)))
 
-(defn save-all [file]
+(defn save-all
   "Saves all nets to file"
+  [file]
   (spit file @net-db))
 
-(defn load-net [file net]
+(defn load-net
   "Load the net from 'file' and save it in the net-databse as 'net'"
+  [file net]
   (swap! net-db assoc net (load-string (slurp file))))
 
-(defn load-all [file]
-  "Loads all nets contained in 'file' and replaces the net-database with them"
+(defn load-all
+  "Loads the net database contained in 'file' and replaces the net-database with it"
+  [file]
   (reset! net-db (load-string (slurp file))))
+
+
 ;; Manual testing Area
 (clear-db)
 (create-net :test)
