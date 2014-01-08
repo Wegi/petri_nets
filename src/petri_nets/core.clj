@@ -12,12 +12,22 @@
   (reset! net-db {}))
 
 (defn create-net
-  "Create a new empty net 'name'."
-  [name]
-  (swap! net-db assoc name {:places {}
-                            :transitions #{}
-                            :edges-in #{}
-                            :edges-out #{}}))
+  "Create a new empty net 'name'. If no name is supplied a unique name is generated."
+  ([]
+     (create-net (hash (gensym))))
+  ([name]
+     (swap! net-db assoc name {:places {}
+                               :transitions #{}
+                               :edges-in #{}
+                               :edges-out #{}})))
+
+(defn copy-net
+  "Lets you instantiate(copy) a net. If no name for the copy is given,
+a random one is generated."
+  ([net]
+     (copy-net net (hash (gensym))))
+  ([net copy]
+     (swap! net-db assoc copy (@net-db net))))
 
 (defn add-place
   "Add a place 'pname' with tokens many tokens into 'netname'."
@@ -78,6 +88,7 @@
 ;; Manual testing Area
 (clear-db)
 (create-net :test)
+(create-net)
 @net-db
 (add-place :test :wgi 24)
 (change-tokens :test :meter 13)
