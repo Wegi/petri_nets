@@ -47,7 +47,9 @@ places/transitions which are merged into one node."
                                 :edges-in merged-ins
                                 :egdes-out merged-outs})))
 
-(defn prefix-places [net]
+(defn prefix-places
+  "Prefix places in net with netname except those in except."
+  [net except]
   (let [name-map (into {} (map #(vector % (str net ":" %)) (placenames net)))]
     (clojure.set/rename-keys ((@net-db net) :places) name-map)))
 
