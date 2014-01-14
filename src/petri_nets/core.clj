@@ -48,10 +48,34 @@ places/transitions which are merged into one node."
                                 :egdes-out merged-outs})))
 
 (defn prefix-places
-  "Prefix places in net with netname except those in except."
-  [net except]
-  (let [name-map (into {} (map #(vector % (str net ":" %)) (placenames net)))]
-    (clojure.set/rename-keys ((@net-db net) :places) name-map)))
+  "Return places in net prefixed with netname except those in except.
+ except is expected to be a hashmap where the keys get ignored."
+  ([net]
+     (prefix-places net {}))
+  ([net except]
+     (let [filtered-names (filter #(not (contains? except %)) (placenames net))
+           name-map (into {} (map #(vector % (str net ":" %)) filtered-names))]
+       (clojure.set/rename-keys ((@net-db net) :places) name-map))))
+
+(defn prefix-transitions
+  "Return the transitions in net prefixed with netname except those on except.
+except is expected to be a hashmap where the keys get ignored."
+  ([net]
+     (prefix-transitions net {}))
+  ([net except]
+     (let [filtered-trans (filter #(not (contains? except %)) (trans net))
+           name-map (into {} (map #(vector % (str net ":" %)) filtered-trans))]
+       (clojure.walk/prewalk-replace name-map (trans net)))))
+
+(defn rename-places
+  "Return the places of net renamed according to equivmap."
+  [net equivmap]
+  (clojure.set/rename-keys ((@net-db net) :places) equivmap))
+
+(defn rename-transitions
+  "Return the transitions of net renamed according to equivmap."
+  [net equivmap]
+  (clojure.walk/prewalk-replace equivmap (trans net)))
 
 (defn add-place
   "Add a place 'pname' with tokens many tokens into 'netname'."
@@ -76,7 +100,7 @@ places/transitions which are merged into one node."
 (defn trans
   "Easy access sugar to get transitions from a net."
   [net]
-  (:transitions (net @net-db)))
+  ((@net-db net) :transitions))
 
 (defn add-trans-place-edge
   "Add a new edge from a transition to a place."
@@ -117,7 +141,7 @@ places/transitions which are merged into one node."
 (add-place :test :wegir 24)
 (merge-places :test :test2 {:a 2})
 (change-tokens :test :meter 13)
-(add-transition :test :t2)
+(add-transition :test :t4)
 (add-trans-place-edge :test :t2 :wg 7)
 (add-place-trans-edge :test :wegi :t2 7)
 (save-net :test "out.txt")
