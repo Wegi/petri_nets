@@ -5,6 +5,9 @@
 ;; at all time
 
 (def net-db (atom {}))
+; Database for nets
+(def namerels (atom {}))
+; Relations for pretty-prining names
 
 (defn clear-db
   "Reset the net-database."
@@ -14,7 +17,7 @@
 (defn create-net
   "Create a new empty net 'name'. If no name is supplied a unique name is generated."
   ([]
-     (let [unique (hash (gensym))]
+     (let [unique (str (hash (gensym)))]
        (create-net unique) unique))
   ([name]
      (swap! net-db assoc name {:places {}
@@ -26,10 +29,27 @@
   "Lets you instantiate(copy) a net. If no name for the copy is given,
 a random one is generated."
   ([net]
-     (let [unique (hash (gensym))]
+     (let [unique (str (hash (gensym)))]
        (copy-net net unique) unique))
   ([net copy]
      (swap! net-db assoc copy (@net-db net))))
+
+(defn merge-nets
+  "Merge two nets into one. 'equiv(p|t)' is a map which contains equivalent
+places/transitions which are merged into one node."
+  [net1 net2 equivp equivt newnet]
+  (let [merged-places (merge-places net1 net2 equivp)
+        merged-trans (merge-trans net1 net2 equivt)
+        merged-ins (merge-edgeins net1 net2 equivp equivt)
+        merged-outs (merge-edgeouts net1 net2 equivp equivt)]
+    (swap! net-db assoc newnet {:places merged-places
+                                :transitions merged-trans
+                                :edges-in merged-ins
+                                :egdes-out merged-outs})))
+
+(defn prefix-places [net]
+  (let [name-map (into {} (map #(vector % (str net ":" %)) (placenames net)))]
+    (clojure.set/rename-keys ((@net-db net) :places) name-map)))
 
 (defn add-place
   "Add a place 'pname' with tokens many tokens into 'netname'."
@@ -92,7 +112,8 @@ a random one is generated."
 (create-net :test)
 (create-net)
 @net-db
-(add-place :test :wgi 24)
+(add-place :test :wegir 24)
+(merge-places :test :test2 {:a 2})
 (change-tokens :test :meter 13)
 (add-transition :test :t2)
 (add-trans-place-edge :test :t2 :wg 7)
