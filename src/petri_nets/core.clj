@@ -35,9 +35,9 @@ a random one is generated."
      (swap! net-db assoc copy (@net-db net))))
 
 (defn merge-nets
-  "Merge two nets into one. 'equiv(p|t)' is a map which contains equivalent
+  "Merge two nets into one. 'equiv' is a map which contains equivalent
 places/transitions which are merged into one node."
-  [net1 net2 equivp equivt newnet]
+  [net1 net2 equiv newnet]
   (let [merged-places (merge-places net1 net2 equivp)
         merged-trans (merge-trans net1 net2 equivt)
         merged-ins (merge-edgeins net1 net2 equivp equivt)
@@ -53,9 +53,7 @@ places/transitions which are merged into one node."
   ([net]
      (prefix-places net {}))
   ([net except]
-     (let [filtered-names (filter #(not (contains? except %)) (placenames net))
-           name-map (into {} (map #(vector % (str net ":" %)) filtered-names))]
-       (clojure.set/rename-keys ((@net-db net) :places) name-map))))
+     (prefix-x net (placenames net) except :places)))
 
 (defn prefix-transitions
   "Return the transitions in net prefixed with netname except those on except.
@@ -63,9 +61,41 @@ except is expected to be a hashmap where the keys get ignored."
   ([net]
      (prefix-transitions net {}))
   ([net except]
-     (let [filtered-trans (filter #(not (contains? except %)) (trans net))
-           name-map (into {} (map #(vector % (str net ":" %)) filtered-trans))]
-       (clojure.walk/prewalk-replace name-map (trans net)))))
+     (prefix-x net (trans net) except :transitions)))
+
+(defn prefix-place-trans-edges
+  "Return the in-edges in net prefixed with netname except those corresponding to
+keys in except."
+  [net except]
+  (prefix-x net (concat (placenames net) (trans net)) except :edges-in))
+
+(defn prefix-trans-place-edges
+  "Return the out-edges in net prefixed with netname exxcept those corresponding to
+keys in except."
+  [net except]
+  (prefix-x net (concat (placenames net) (trans net)) except :edges-out))
+
+(defn prefix-x
+  "Prefix Everything in the what entry of net which is in unfiltered - except."
+  [net unfiltered except what]
+  (let [filtered (filter #(not (contains? except %)) unfiltered)
+        name-map (into {} (map #(vector % (str net ":" %)) filtered))]
+    (clojure.walk/prewalk-replace name-map ((@net-db net) what))))
+
+
+
+(prefix-x :test (placenames :test) {:weg :a} :places)
+
+(prefix-place-trans-edge :test {:we :foo} {}) ;;TODO filter
+;;transitions key funktioniert nicht
+;; 2 kanten von einem place broken
+;; namen der trans sammeln  (wie prefix-trans, maybe one function)
+;; renamen
+;; gg
+;; Alle rename funktionen auf einmal <- eine Methode nur :places etc.
+;; übergeben  prewalk-replace
+
+
 
 (defn rename-places
   "Return the places of net renamed according to equivmap."
@@ -138,12 +168,12 @@ except is expected to be a hashmap where the keys get ignored."
 (create-net :test)
 (create-net)
 @net-db
-(add-place :test :wegir 24)
+(add-place :test :wegi 24)
 (merge-places :test :test2 {:a 2})
 (change-tokens :test :meter 13)
-(add-transition :test :t4)
-(add-trans-place-edge :test :t2 :wg 7)
-(add-place-trans-edge :test :wegi :t2 7)
+(add-transition :test :t)
+(add-trans-place-edge :test :t3 :wg 7)
+(add-place-trans-edge :test :wegi :t3 7)
 (save-net :test "out.txt")
 (load-net "out.txt" :test)
 (save-all "out.txt")
