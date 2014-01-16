@@ -82,20 +82,11 @@ keys in except."
         name-map (into {} (map #(vector % (str net ":" %)) filtered))]
     (clojure.walk/prewalk-replace name-map ((@net-db net) what))))
 
-
-
-(prefix-x :test (placenames :test) {:weg :a} :places)
-
-(prefix-place-trans-edge :test {:we :foo} {}) ;;TODO filter
-;;transitions key funktioniert nicht
-;; 2 kanten von einem place broken
-;; namen der trans sammeln  (wie prefix-trans, maybe one function)
+;;TODO
 ;; renamen
 ;; gg
 ;; Alle rename funktionen auf einmal <- eine Methode nur :places etc.
 ;; übergeben  prewalk-replace
-
-
 
 (defn rename-places
   "Return the places of net renamed according to equivmap."
