@@ -34,18 +34,35 @@ a random one is generated."
   ([net copy]
      (swap! net-db assoc copy (@net-db net))))
 
+(defn placenames
+  "Get a list of the placenames in 'net'."
+  [net]
+  (keys (:places (net @net-db))))
+
+(defn trans
+  "Easy access sugar to get transitions from a net."
+  [net]
+  ((@net-db net) :transitions))
+
 (defn merge-nets
   "Merge two nets into one. 'equiv' is a map which contains equivalent
 places/transitions which are merged into one node."
-  [net1 net2 equiv newnet]
-  (let [merged-places (merge-places net1 net2 equivp)
-        merged-trans (merge-trans net1 net2 equivt)
-        merged-ins (merge-edgeins net1 net2 equivp equivt)
-        merged-outs (merge-edgeouts net1 net2 equivp equivt)]
-    (swap! net-db assoc newnet {:places merged-places
-                                :transitions merged-trans
-                                :edges-in merged-ins
-                                :egdes-out merged-outs})))
+  [net1 net2 equiv newnet] :foo)
+
+(defn prefix-net
+  "Prefix all places and transitions in the whole net."
+  [net except]
+  (let [unfiltered (clojure.set/union (trans net) (placenames net))
+        filtered (filter #(not (contains? except %)) unfiltered)
+        name-map (into {} (map #(vector % (str net "<>" %)) filtered))]
+    (clojure.walk/prewalk-replace name-map (@net-db net))))
+
+(defn prefix-x
+  "Prefix Everything in the what entry of net which is in unfiltered - except."
+  [net unfiltered except what]
+  (let [filtered (filter #(not (contains? except %)) unfiltered)
+        name-map (into {} (map #(vector % (str net ":" %)) filtered))]
+    (clojure.walk/prewalk-replace name-map ((@net-db net) what))))
 
 (defn prefix-places
   "Return places in net prefixed with netname except those in except.
@@ -75,19 +92,6 @@ keys in except."
   [net except]
   (prefix-x net (concat (placenames net) (trans net)) except :edges-out))
 
-(defn prefix-x
-  "Prefix Everything in the what entry of net which is in unfiltered - except."
-  [net unfiltered except what]
-  (let [filtered (filter #(not (contains? except %)) unfiltered)
-        name-map (into {} (map #(vector % (str net ":" %)) filtered))]
-    (clojure.walk/prewalk-replace name-map ((@net-db net) what))))
-
-;;TODO
-;; renamen
-;; gg
-;; Alle rename funktionen auf einmal <- eine Methode nur :places etc.
-;; übergeben  prewalk-replace
-
 (defn rename-places
   "Return the places of net renamed according to equivmap."
   [net equivmap]
@@ -97,6 +101,21 @@ keys in except."
   "Return the transitions of net renamed according to equivmap."
   [net equivmap]
   (clojure.walk/prewalk-replace equivmap (trans net)))
+
+(defn rename-place-trans-edges
+  "Return the in-edges renamed according to equivmap"
+  [net equivmap]
+  (clojure.walk/prewalk-replace equivmap ((@net-db net) :edges-in)))
+
+(defn rename-trans-place-edges
+  "Return the out-edges renamed according to equivmap"
+  [net equivmap]
+  (clojure.walk/prewalk-replace equivmap ((@net-db net) :edges-out)))
+
+(defn rename-net
+  "Rename all places and transitions in the whole net according to equivmap."
+  [net equivmap]
+  (clojure.walk/prewalk-replace equivmap (@net-db net)))
 
 (defn add-place
   "Add a place 'pname' with tokens many tokens into 'netname'."
@@ -112,16 +131,6 @@ keys in except."
   "Add a transitions 'tname' to the net."
   [netname tname]
   (swap! net-db update-in [netname :transitions] #(clojure.set/union % #{tname})))
-
-(defn placenames
-  "Get a list of the placenames in 'net'."
-  [net]
-  (keys (:places (net @net-db))))
-
-(defn trans
-  "Easy access sugar to get transitions from a net."
-  [net]
-  ((@net-db net) :transitions))
 
 (defn add-trans-place-edge
   "Add a new edge from a transition to a place."
@@ -160,9 +169,8 @@ keys in except."
 (create-net)
 @net-db
 (add-place :test :wegi 24)
-(merge-places :test :test2 {:a 2})
 (change-tokens :test :meter 13)
-(add-transition :test :t)
+(add-transition :test :t3)
 (add-trans-place-edge :test :t3 :wg 7)
 (add-place-trans-edge :test :wegi :t3 7)
 (save-net :test "out.txt")
