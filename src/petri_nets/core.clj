@@ -44,11 +44,6 @@ a random one is generated."
   [net]
   ((@net-db net) :transitions))
 
-(defn merge-nets
-  "Merge two nets into one. 'equiv' is a map which contains equivalent
-places/transitions which are merged into one node."
-  [net1 net2 equiv newnet] :foo)
-
 (defn prefix-net
   "Prefix all places and transitions in the whole net."
   [net except]
@@ -112,10 +107,10 @@ keys in except."
   [net equivmap]
   (clojure.walk/prewalk-replace equivmap ((@net-db net) :edges-out)))
 
-(defn rename-net
-  "Rename all places and transitions in the whole net according to equivmap."
-  [net equivmap]
-  (clojure.walk/prewalk-replace equivmap (@net-db net)))
+(defn rename-all
+  "Rename all places and transitions in structure according to equivmap."
+  [structure equivmap]
+  (clojure.walk/prewalk-replace equivmap structure))
 
 (defn add-place
   "Add a place 'pname' with tokens many tokens into 'netname'."
@@ -142,6 +137,47 @@ keys in except."
   [net place t tokens]
   (swap! net-db assoc-in [net :edges-in place t] tokens))
 
+(defn merge-places
+  "Merge two nodes into one. Use with maps."
+  [node1 node2]
+  (merge-with max node1 node2))
+
+(defn merge-trans
+  "Merge two nodes into one. Use with sets."
+  [node1 node2]
+  (clojure.set/union node1 node2))
+
+(defn deep-merge-with
+  "Like merge-with, but merges maps recursively, applying the given fn
+  only when there's a non-map at a particular level.
+  (deepmerge + {:a {:b {:c 1 :d {:x 1 :y 2}} :e 3} :f 4}
+               {:a {:b {:c 2 :d {:z 9} :z 3} :e 100}})
+  -> {:a {:b {:z 3, :c 3, :d {:z 9, :x 1, :y 2}}, :e 103}, :f 4}
+Taken from apparently not to 1.3 ported clojure.contriv.map-utils"
+  [f & maps]
+  (apply
+    (fn m [& maps]
+      (if (every? map? maps)
+        (apply merge-with m maps)
+        (apply f maps)))
+    maps))
+
+(defn merge-nets
+  "Merge net1 and net2 into a net called netname. If no name is given a unique symbol is chosen.
+equiv is a map of equivalent transitions and places, that have to be merged. The key is from net1
+and the value from net2."
+  ([net1 net2 equiv netname]
+     (let [prefixed (prefix-net net1 equiv)
+           renamed (rename-all prefixed equiv)
+           merged-places (merge-places (renamed :places) ((@net-db net2) :places))
+           merged-trans (merge-trans (renamed :transitions) ((@net-db net2) :transitions))
+           merged-ins (deep-merge-with max (renamed :edges-in) ((@net-db net2) :edges-in))
+           merged-outs (deep-merge-with max (renamed :edges-out) ((@net-db net2) :edges-out))]
+       (swap! net-db assoc netname {:places merged-places
+                                    :transitions merged-trans
+                                    :edges-in merged-ins
+                                    :edges-out merged-outs}))))
+
 (defn save-net
   "Save 'net' to 'file'"
   [net file]
@@ -165,12 +201,12 @@ keys in except."
 
 ;; Manual testing Area
 (clear-db)
-(create-net :test)
+(create-net :test2)
 (create-net)
 @net-db
 (add-place :test :wegi 24)
 (change-tokens :test :meter 13)
-(add-transition :test :t3)
+(add-transition :test2 :t2)
 (add-trans-place-edge :test :t3 :wg 7)
 (add-place-trans-edge :test :wegi :t3 7)
 (save-net :test "out.txt")
