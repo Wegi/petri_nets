@@ -6,8 +6,6 @@
 
 (def net-db (atom {}))
 ; Database for nets
-(def namerels (atom {}))
-; Relations for pretty-prining names
 
 (defn clear-db
   "Reset the net-database."
@@ -18,7 +16,7 @@
   "Create a new empty net 'name'. If no name is supplied a unique name is generated."
   ([]
      (let [unique (str (hash (gensym)))]
-       (create-net unique) unique))
+       (create-net unique)))
   ([name]
      (swap! net-db assoc name {:places {}
                                :transitions #{}
@@ -27,17 +25,18 @@
 
 (defn copy-net
   "Lets you instantiate(copy) a net. If no name for the copy is given,
-a random one is generated."
+a random one is generated. Names are still unique, because the tuple (Netname, Place/transition)
+is unique."
   ([net]
      (let [unique (str (hash (gensym)))]
-       (copy-net net unique) unique))
+       (copy-net net unique)))
   ([net copy]
      (swap! net-db assoc copy (@net-db net))))
 
 (defn placenames
   "Get a list of the placenames in 'net'."
   [net]
-  (keys (:places (net @net-db))))
+  (keys (:places (@net-db net))))
 
 (defn trans
   "Easy access sugar to get transitions from a net."
@@ -198,18 +197,12 @@ and the value from net2."
   [file]
   (reset! net-db (load-string (slurp file))))
 
+(defn netnames
+  "Return all keys (netnames) currently present in the database."
+  []
+  (keys @net-db))
 
-;; Manual testing Area
-(clear-db)
-(create-net :test2)
-(create-net)
-@net-db
-(add-place :test :wegi 24)
-(change-tokens :test :meter 13)
-(add-transition :test2 :t2)
-(add-trans-place-edge :test :t3 :wg 7)
-(add-place-trans-edge :test :wegi :t3 7)
-(save-net :test "out.txt")
-(load-net "out.txt" :test)
-(save-all "out.txt")
-(load-all "out.txt")
+(defn remove-net
+  "Remove a net permanently."
+  [net]
+  (swap! net-db dissoc net))
