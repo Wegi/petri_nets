@@ -21,7 +21,8 @@
      (swap! net-db assoc name {:places {}
                                :transitions #{}
                                :edges-in {}
-                               :edges-out {}})))
+                               :edges-out {}
+                               :watchdogs #{}})))
 
 (defn copy-net
   "Lets you instantiate(copy) a net. If no name for the copy is given,
@@ -171,11 +172,13 @@ and the value from net2."
            merged-places (merge-places (renamed :places) ((@net-db net2) :places))
            merged-trans (merge-trans (renamed :transitions) ((@net-db net2) :transitions))
            merged-ins (deep-merge-with max (renamed :edges-in) ((@net-db net2) :edges-in))
-           merged-outs (deep-merge-with max (renamed :edges-out) ((@net-db net2) :edges-out))]
+           merged-outs (deep-merge-with max (renamed :edges-out) ((@net-db net2) :edges-out))
+           merged-watchdogs (merge-trans (renamed :watchdogs) ((@net-db net2) :watchdogs))]
        (swap! net-db assoc netname {:places merged-places
                                     :transitions merged-trans
                                     :edges-in merged-ins
-                                    :edges-out merged-outs}))))
+                                    :edges-out merged-outs
+                                    :watchdogs merged-watchdogs}))))
 
 (defn save-net
   "Save 'net' to 'file'"
@@ -206,3 +209,8 @@ and the value from net2."
   "Remove a net permanently."
   [net]
   (swap! net-db dissoc net))
+
+(defn add-watchdog
+  "Add a watchdog-func to the net. func must be quoted!"
+  [net func]
+  (swap! net-db update-in [net :watchdogs] #(clojure.set/union % #{func})))
