@@ -21,8 +21,7 @@
      (swap! net-db assoc name {:places {}
                                :transitions #{}
                                :edges-in {}
-                               :edges-out {}
-                               :watchdogs #{}})))
+                               :edges-out {}})))
 
 (defn copy-net
   "Lets you instantiate(copy) a net. If no name for the copy is given,
@@ -56,7 +55,7 @@ is unique."
   "Prefix Everything in the what entry of net which is in unfiltered - except."
   [net unfiltered except what]
   (let [filtered (filter #(not (contains? except %)) unfiltered)
-        name-map (into {} (map #(vector % (str net ":" %)) filtered))]
+        name-map (into {} (map #(vector % (str net "<>" %)) filtered))]
     (clojure.walk/prewalk-replace name-map ((@net-db net) what))))
 
 (defn prefix-places
@@ -133,9 +132,9 @@ keys in except."
   (swap! net-db assoc-in [net :edges-out t place] tokens))
 
 (defn add-place-trans-edge
-  "Add a new edge from a place to a transition."
+  "Add a new edge from a place to a transition. The transition is the key."
   [net place t tokens]
-  (swap! net-db assoc-in [net :edges-in place t] tokens))
+  (swap! net-db assoc-in [net :edges-in t place] tokens))
 
 (defn merge-places
   "Merge two nodes into one. Use with maps."
@@ -172,13 +171,11 @@ and the value from net2."
            merged-places (merge-places (renamed :places) ((@net-db net2) :places))
            merged-trans (merge-trans (renamed :transitions) ((@net-db net2) :transitions))
            merged-ins (deep-merge-with max (renamed :edges-in) ((@net-db net2) :edges-in))
-           merged-outs (deep-merge-with max (renamed :edges-out) ((@net-db net2) :edges-out))
-           merged-watchdogs (merge-trans (renamed :watchdogs) ((@net-db net2) :watchdogs))]
+           merged-outs (deep-merge-with max (renamed :edges-out) ((@net-db net2) :edges-out))]
        (swap! net-db assoc netname {:places merged-places
                                     :transitions merged-trans
                                     :edges-in merged-ins
-                                    :edges-out merged-outs
-                                    :watchdogs merged-watchdogs}))))
+                                    :edges-out merged-outs}))))
 
 (defn save-net
   "Save 'net' to 'file'"
@@ -210,7 +207,7 @@ and the value from net2."
   [net]
   (swap! net-db dissoc net))
 
-(defn add-watchdog
-  "Add a watchdog-func to the net. func must be quoted!"
-  [net func]
-  (swap! net-db update-in [net :watchdogs] #(clojure.set/union % #{func})))
+(defn tokens-in
+  "Returns number of tokens in a specified place."
+  [net place]
+  (get-in (@net-db net) [:places place]))

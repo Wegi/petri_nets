@@ -24,7 +24,7 @@ If your chosen name is allready in use nil is returned."
 
 (defn copy-net
   "Instantiate a new net based on an existing net-template. If the name for the new
-net is allready nil is returned."
+net is allready in use nil is returned."
   ([template]
      (core/copy-net template))
   ([template new-netname]
@@ -122,4 +122,31 @@ the loaded net is allready in use, return nil."
 (defn remove-net
   "Remove a net permanently from the database."
   [net]
-  (core/remove-net net))
+  (if (some #{net} (core/netnames))
+    (core/remove-net net)))
+
+(defn tokens-in
+  "Return number of tokens in specified place. If place or net isn't instanciated nil is returned."
+  [net place]
+  (if (some #{place} (core/placenames net))
+    (core/tokens-in net place)
+    nil))
+
+(defn netnames
+  "Return all netnames currently present in the db."
+  [] (core/netnames))
+
+(defn transitions
+  "Return all transitions of a net."
+  [net]
+  (core/trans net))
+
+(defn in-edges
+  "Return all place-trans edges."
+  [net]
+  ((@core/net-db net) :edges-in))
+
+(defn out-edges
+  "Return all trans-place edges."
+  [net]
+  ((@core/net-db net) :edges-out))
