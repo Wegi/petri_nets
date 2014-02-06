@@ -100,7 +100,7 @@ as an allready existing net."
   (api/remove-net (current))
   (swap! simstate assoc :current :default))
 
-(defn fireable
+(defn fireable?
   "Check whether a transition in the selected net can be fired."
   [trans]
   (let [in-edges (api/in-edges (current))
@@ -110,12 +110,21 @@ as an allready existing net."
 
 (defn fire
   "Execute a transition in the selected net. If The Execution is not possible
-return nil."
-  [trans]
-  (if (fireable trans)
-    (let [ins (get (api/in-edges (current)) trans)
-          outs (get (api/out-edges (current)) trans)]
-      (map (fn [[p t]] (remove-tokens p t)) ins)
-      (map (fn [[p t]] (add-tokens p t)) outs)
-      )
-    nil))
+return nil. If no parameters are given a random fireable transition
+is executed."
+  ([]
+     (let [fireable (filter fireable? (api/transitions (current)))]
+       (if-not (empty? fireable)
+         (fire (rand-nth fireable)))))
+  ([trans]
+     (if (fireable? trans)
+       (let [ins (get (api/in-edges (current)) trans)
+             outs (get (api/out-edges (current)) trans)]
+         (doall (map (fn [[p t]] (remove-tokens p t)) ins))
+         (doall (map (fn [[p t]] (add-tokens p t)) outs)))
+       nil)))
+
+
+;;Tets cases
+(create-select :foo)
+(api/change-tokens (current) :in 7)
