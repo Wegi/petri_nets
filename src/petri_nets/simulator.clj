@@ -113,7 +113,7 @@ as an allready existing net."
 return nil. If no parameters are given a random fireable transition
 is executed."
   ([]
-     (let [fireable (filter fireable? (api/transitions (current)))]
+     (let [fireable (get (show-fireable!) (current))]
        (if-not (empty? fireable)
          (fire (rand-nth fireable)))))
   ([trans]
@@ -124,7 +124,20 @@ is executed."
          (doall (map (fn [[p t]] (add-tokens p t)) outs)))
        nil)))
 
+(defn show-fireable!
+  "Show all fireable transitions in a net. Without parameters the net is the currently selected."
+  ([]
+     (show-fireable! (current)))
+  ([net]
+     {net (filter fireable? (api/transitions net))}))
 
+(defn all-fireable!
+  "Show all nets and their fireable transitions, organized in a map."
+  []
+  (apply merge (map show-fireable! (api/netnames))))
+
+(all-fireable!)
 ;;Tets cases
-(create-select :foo)
-(api/change-tokens (current) :in 7)
+(select-net :foo)
+(create-select :foor)
+(api/change-tokens (current) :in3 7)
