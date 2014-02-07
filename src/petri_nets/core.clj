@@ -21,7 +21,8 @@
      (swap! net-db assoc name {:places {}
                                :transitions #{}
                                :edges-in {}
-                               :edges-out {}})))
+                               :edges-out {}
+                               :props #{}})))
 
 (defn copy-net
   "Lets you instantiate(copy) a net. If no name for the copy is given,
@@ -31,7 +32,9 @@ is unique."
      (let [unique (str (hash (gensym)))]
        (copy-net net unique)))
   ([net copy]
-     (swap! net-db assoc copy (@net-db net))))
+     (let [renamed (clojure.walk/prewalk-replace {net copy} ((@net-db net) :props))
+           copynet (assoc-in @net-db [net :props] renamed)]
+       (swap! net-db assoc copy (copynet net)))))
 
 (defn placenames
   "Get a list of the placenames in 'net'."
@@ -161,6 +164,13 @@ Taken from apparently not to 1.3 ported clojure.contriv.map-utils"
         (apply f maps)))
     maps))
 
+(defn merge-properties
+  "Merge two properties together."
+  [net1 net2 newnetname]
+  (let [newset1 (set (clojure.walk/prewalk-replace {net1 newnetname} ((@net-db net1) :props)))
+        newset2 (set (clojure.walk/prewalk-replace {net2 newnetname} ((@net-db net2) :props)))]
+    (clojure.set/union newset1 newset2)))
+
 (defn merge-nets
   "Merge net1 and net2 into a net called netname. If no name is given a unique symbol is chosen.
 equiv is a map of equivalent transitions and places, that have to be merged. The key is from net1
@@ -171,11 +181,14 @@ and the value from net2."
            merged-places (merge-places (renamed :places) ((@net-db net2) :places))
            merged-trans (merge-trans (renamed :transitions) ((@net-db net2) :transitions))
            merged-ins (deep-merge-with max (renamed :edges-in) ((@net-db net2) :edges-in))
-           merged-outs (deep-merge-with max (renamed :edges-out) ((@net-db net2) :edges-out))]
+           merged-outs (deep-merge-with max (renamed :edges-out) ((@net-db net2) :edges-out))
+           merged-props (concat ((@net-db net1) :properties) ((@net-db net2) :properties))
+           merged-properties (merge-properties net1 net2 netname)]
        (swap! net-db assoc netname {:places merged-places
                                     :transitions merged-trans
                                     :edges-in merged-ins
-                                    :edges-out merged-outs}))))
+                                    :edges-out merged-outs
+                                    :props merged-properties}))))
 
 (defn save-net
   "Save 'net' to 'file'"
@@ -211,3 +224,14 @@ and the value from net2."
   "Returns number of tokens in a specified place."
   [net place]
   (get-in (@net-db net) [:places place]))
+
+;; ####### Here work on properties beginns
+(defn properties
+  "Return the properties of a net."
+  [net]
+  ((@net-db net) :props))
+
+(defn add-property
+  "Add a property to the net. Op is the property function with the arguments args."
+  [net property]
+  (swap! net-db update-in [net :props] #(clojure.set/union % #{property})))

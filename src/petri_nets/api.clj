@@ -150,3 +150,21 @@ the loaded net is allready in use, return nil."
   "Return all trans-place edges."
   [net]
   ((@core/net-db net) :edges-out))
+
+(defn add-property
+  "Add a property to the net. Op is the property-function with its arguments args."
+  [net property]
+  (if (some #{net} (core/netnames))
+    (core/add-property net property)))
+
+(defn properties
+  "Return all properties from net."
+  [net]
+  (if (some #{net} (core/netnames))
+    (core/properties net)))
+
+(defn placenames
+  "Return all placenames of a net."
+  [net]
+  (if (some #{net} (core/netnames))
+    (core/placenames net)))

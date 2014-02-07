@@ -29,8 +29,9 @@
 
 (defn copy-net
   "Copy a net. Usefull for instanciacion."
-  [template copy]
-  (api/copy-net template copy))
+  ([copy] (copy-net (current) copy))
+  ([template copy]
+     (api/copy-net template copy)))
 
 (defn merge-nets
   "Merge two nets, equivmap is a map of places and transitions that are equivalent in both nets."
@@ -43,40 +44,47 @@
 
 (defn add-place
   "Add a place to the currently selected net."
-  [place tokens]
-  (api/add-place (current) place tokens))
+  ([place tokens] (add-place (current) place tokens))
+  ([net place tokens]
+     (api/add-place net place tokens)))
 
 (defn add-transition
   "Add a transition to the currently selected net."
-  [transition]
-  (api/add-transition (current) transition))
+  ([transition] (add-transition (current transition)))
+  ([net transition]
+     (api/add-transition net transition)))
 
 (defn remove-tokens
   "Remove tokens from a place in the currently selected net."
-  [place x-tokens]
-  (let [cur (api/tokens-in (current) place)]
-    (api/change-tokens (current) place (- cur x-tokens))))
+  ([place x-tokens] (remove-tokens (current) place x-tokens))
+  ([net place x-tokens]
+     (let [cur (api/tokens-in net place)]
+       (api/change-tokens net place (- cur x-tokens)))))
 
 (defn tokens-in
   "Return number of tokens in place."
-  [place]
-  (api/tokens-in (current) place))
+  ([place] (tokens-in (current) place))
+  ([net place]
+     (api/tokens-in net place)))
 
 (defn add-tokens
   "Add tokens to a place in the currently selected net."
-  [place x-tokens]
-  (let [cur (api/tokens-in (current) place)]
-    (api/change-tokens (current) place (+ cur x-tokens))))
+  ([place x-tokens] (add-tokens (current) place x-tokens))
+  ([net place x-tokens]
+     (let [cur (api/tokens-in net place)]
+       (api/change-tokens net place (+ cur x-tokens)))))
 
 (defn add-edge
   "Add a new Edge to the currently selected net."
-  [from to tokens]
-  (api/add-edge (current) from to tokens))
+  ([from to tokens] (add-edge (current) from to tokens))
+  ([net from to tokens]
+     (api/add-edge net from to tokens)))
 
 (defn save-net
   "Save selected net to file."
-  [file]
-  (api/save-net (current) file))
+  ([file] (save-net (current) file))
+  ([net file]
+     (api/save-net net file)))
 
 (defn save-all
   "Save all nets into a Single file. (Has to be loaded wih load-all)."
@@ -96,17 +104,19 @@ as an allready existing net."
 
 (defn delete-net
   "Delete the selected net and set the selection to :default."
-  []
-  (api/remove-net (current))
-  (swap! simstate assoc :current :default))
+  ([] (delete-net (current)))
+  ([net]
+     (api/remove-net net)
+     (swap! simstate assoc :current :default)))
 
 (defn fireable?
   "Check whether a transition in the selected net can be fired."
-  [trans]
-  (let [in-edges (api/in-edges (current))
-        filtered (get in-edges trans)
-        mapped (map (fn [[place token]] (>= (- (tokens-in place) token) 0)) filtered)]
-    (not (some false? mapped))))
+  ([trans] (fireable? (current) trans))
+  ([net trans]
+     (let [in-edges (api/in-edges net)
+           filtered (get in-edges trans)
+           mapped (map (fn [[place token]] (>= (- (tokens-in net place) token) 0)) filtered)]
+       (and (not (some false? mapped)) (not (empty? mapped))))))
 
 (defn fire
   "Execute a transition in the selected net. If The Execution is not possible
@@ -136,8 +146,46 @@ is executed."
   []
   (apply merge (map show-fireable! (api/netnames))))
 
-(all-fireable!)
-;;Tets cases
-(select-net :foo)
-(create-select :foor)
-(api/change-tokens (current) :in3 7)
+(defn netalive
+  "Check whether the net has any fireable transition."
+  [net]
+  (some true? (map (partial fireable? net) (api/transitions net))))
+
+(defn add-netalive
+  "Add the netalive property to the current net."
+  ([] (add-netalive (current)))
+  ([net]
+     (api/add-property net `(netalive ~net))))
+
+(defn transitionalive
+  "Checks if at least one of the in args specified transitions can be fired."
+  [net args]
+  (some true? (map (partial fireable? net) args)))
+
+(defn nonempty
+  "Check if at least one of the places is not empty."
+  [net args]
+  (let [tokensmap (map #(api/tokens-in net %) args)
+        nonzeros (map zero? tokensmap)]
+    (some false? nonzeros)))
+
+(defn add-transitionalive
+  "Add the transitionalive property to the current net. args has to be a sequence."
+  ([args] (add-transitionalive (current) args))
+  ([net args]
+     (if (clojure.set/subset? (set args) (api/transitions net))
+       (api/add-property net `(transitionalive ~net ~args)))))
+
+(defn add-nonempty
+  "Add the nonempty property to the current net. args has to be a sequence."
+  ([args] (add-nonempty (current) args))
+  ([net args]
+     (if (clojure.set/subset? (set args) (set (api/placenames net)))
+       (api/add-property net `(nonempty ~net ~args)))))
+
+(defn add-property
+  "Add a custom property to the net."
+  ([property]
+     (add-property (current) property))
+  ([net property]
+     (api/add-property net property)))
