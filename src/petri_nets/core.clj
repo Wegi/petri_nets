@@ -47,7 +47,9 @@ is unique."
      (let [unique (str (hash (gensym)))]
        (copy-net net unique)))
   ([net copy]
-     (let [renamed (clojure.walk/prewalk-replace {net copy} ((@net-db net) :props))
+     (let [set-o ((@net-db net) :props)
+           renamed (set (map #(clojure.string/replace % (str " " \" net \")
+                                                      (str " " \" copy \" " ")) set-o))
            copynet (assoc-in @net-db [net :props] renamed)]
        (swap! net-db assoc copy (copynet net)))))
 
@@ -179,26 +181,32 @@ Taken from apparently not to 1.3 ported clojure.contriv.map-utils"
         (apply f maps)))
     maps))
 
-(defn merge-properties
-  "Merge two properties together."
-  [net1 net2 newnetname]
-  (let [newset1 (set (clojure.walk/prewalk-replace {net1 newnetname} ((@net-db net1) :props)))
-        newset2 (set (clojure.walk/prewalk-replace {net2 newnetname} ((@net-db net2) :props)))]
-    (clojure.set/union newset1 newset2)))
+(defn merge-props
+  "Merge two Property-Sets together. Renames the nets also."
+  [net1 net2 newnet set1 set2]
+  (let [newset1 (set (clojure.walk/prewalk-replace {net1 newnet} set1))
+        newset2 (set (clojure.walk/prewalk-replace {net2 newnet} set2))
+        strprops1 (map str newset1)
+        strprops2 (map str newset2)]
+    (clojure.set/union (set strprops1) (set strprops2))))
 
 (defn merge-nets
   "Merge net1 and net2 into a net called netname. If no name is given a unique symbol is chosen.
 equiv is a map of equivalent transitions and places, that have to be merged. The key is from net1
 and the value from net2."
   ([net1 net2 equiv netname]
+     ;ugly workaround, please lord forgive the ugglyness
+     (let [set1 (set (map read-string ((@net-db net1) :props)))
+           set2 (set (map read-string ((@net-db net2) :props)))]
+       (swap! net-db assoc-in [net1 :props] set1)
+       (swap! net-db assoc-in [net2 :props] set2))
      (let [prefixed (prefix-net net1 equiv)
            renamed (rename-all prefixed equiv)
            merged-places (merge-places (renamed :places) ((@net-db net2) :places))
            merged-trans (merge-trans (renamed :transitions) ((@net-db net2) :transitions))
            merged-ins (deep-merge-with max (renamed :edges-in) ((@net-db net2) :edges-in))
            merged-outs (deep-merge-with max (renamed :edges-out) ((@net-db net2) :edges-out))
-           merged-props (concat ((@net-db net1) :properties) ((@net-db net2) :properties))
-           merged-properties (merge-properties net1 net2 netname)]
+           merged-properties (merge-props net1 net2 netname (renamed :props) ((@net-db net2) :props))]
        (swap! net-db assoc netname {:places merged-places
                                     :transitions merged-trans
                                     :edges-in merged-ins
@@ -208,7 +216,7 @@ and the value from net2."
 (defn save-net
   "Save 'net' to 'file'"
   [net file]
-  (spit file (@net-db net)))
+  (spit file {net (@net-db net)}))
 
 (defn save-all
   "Saves all nets to file"
@@ -216,9 +224,14 @@ and the value from net2."
   (spit file @net-db))
 
 (defn load-net
-  "Load the net from 'file' and save it in the net-databse as 'net'"
+  "Load the net from 'file' and save it in the net-database as 'net'"
   [file net]
-  (swap! net-db assoc net (load-string (slurp file))))
+  (let [data (load-string (slurp file))
+        key (first (keys data))
+        props ((data key) :props)
+        replaced (set (map #(clojure.string/replace % (str " " \" key \")
+                                                    (str " " \" net \" " ")) props))]
+    (swap! net-db assoc net (assoc (data key) :props replaced))))
 
 (defn load-all
   "Loads the net database contained in 'file' and replaces the net-database with it"

@@ -41,20 +41,27 @@ nil is returned."
     nil
     (core/merge-nets net1 net2 equivalent-map newnet)))
 
+(defn name-free?
+  "Checks whether the name is still free in corresponding net."
+  [net name]
+  (if-not (or (some #{name} (core/placenames net))
+              (some #{name} (core/trans net))
+              (= net name))
+    true
+    false))
+
 (defn add-place
   "Add a new place with its tokens to a net. If the placename is allready
 present in the net nil is returned."
   [net place tokens]
-  (if (some #{place} (core/placenames net))
-    nil
+  (if (name-free? net place)
     (if (number? tokens) (core/add-place net place tokens))))
 
 (defn add-transition
   "Add a new transition to a net. If the transitions name is allready
 present in the net nil is returned."
   [net transition]
-  (if (some #{transition} (core/trans net))
-    nil
+  (if (name-free? net transition)
     (core/add-transition net transition)))
 
 (defn change-tokens

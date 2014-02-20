@@ -208,7 +208,8 @@ is executed."
          (api/add-property net (str "(" 'petri-nets.simulator/nonempty " " \" net \" " [" new-args "])"))))))
 
 (defn add-property
-  "Add a custom property to the net."
+  "Add a custom property to the net. property has to be a String which describes
+a Vector with the property-funcion calls."
   ([property]
      (add-property (current) (str property)))
   ([net property]

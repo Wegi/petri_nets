@@ -29,21 +29,19 @@
 (def b-load-all (button :text "Load All"))
 (def b-save-net (button :text "Save Net"))
 (def b-save-all (button :text "Save All"))
+(def b-merge-nets (button :text "Merge Nets"))
+(def b-copy-net (button :text "Copy Selected Net"))
 
 (def b-add-place (button :text "Add Place"))
-(def b-remove-place (button :text "Remove Selected Place"))
-(def place-panel (vertical-panel :items [b-add-place b-remove-place]))
+(def place-panel (vertical-panel :items [b-add-place]))
 
 (def b-add-transition (button :text "Add Transition"))
-(def b-remove-transition (button :text "Remove Selected Transition"))
 
 (def b-add-pt-edge (button :text "Add Place->Trans Edge"))
-(def b-remove-pt-edge (button :text "Remove Place->Trans Edge"))
-(def pt-edge-panel (vertical-panel :items [b-add-pt-edge b-remove-pt-edge]))
+(def pt-edge-panel (vertical-panel :items [b-add-pt-edge]))
 
 (def b-add-tp-edge (button :text "Add Trans->Place Edge"))
-(def b-remove-tp-edge (button :text "Remove Trans->Place Edge"))
-(def tp-edge-panel (vertical-panel :items [b-add-tp-edge b-remove-tp-edge]))
+(def tp-edge-panel (vertical-panel :items [b-add-tp-edge]))
 
 (def b-add-netalive (button :text "Add Netalive"))
 (def b-add-transalive (button :text "Add Transitionalive (Selected)"))
@@ -51,7 +49,7 @@
 
 (def b-fire-selected (button :text "Fire Selected Transition"))
 (def b-fire-random (button :text "Fire Random transition"))
-(def transition-panel (vertical-panel :items [b-add-transition b-remove-transition
+(def transition-panel (vertical-panel :items [b-add-transition
                                               b-fire-selected b-fire-random]))
 
 (def prop-indicator (listbox))
@@ -94,13 +92,6 @@
           tokens (read-string (input "Enter Initial Tokens"))]
       (simulator/add-place selected name tokens)
       (config! places :model (simulator/all-places selected)))))
-
-(defn l-remove-place
-  [e]
-  (when-let [net (selected-net)]
-    (when-let [place (selection places)]
-      (simulator/remove-place net (first place))
-      (config! places :model (simulator/all-places net)))))
 
 (defn l-add-transition
   [e]
@@ -204,11 +195,25 @@
     (l-update-boxes e)
     (run-properties net)))
 
-;TODO Remove Buttons, Loading Nets with correct
-                                        ;names, too few parameters for
-                              ;properties
-                                        ;Keine Feuerbare transition nullpointer
-;Merge Nets, Copy Nets
+(defn l-merge-nets
+  [e]
+  (when-let [first-net (first (selection nets {:multi? true}))]
+    (when-let [second-net (second (selection nets {:multi? true}))]
+      (when-let [newnet (input "Enter a name for the merged net")]
+        (let [equivstr (input "Enter equivalent Places / Transitions")
+              splitted-map (clojure.string/split equivstr #",")
+              res (apply array-map splitted-map)]
+          (simulator/merge-nets first-net second-net res newnet)
+          (l-update-boxes e)
+          (config! nets :model (simulator/netnames)))))))
+
+(defn l-copy-net
+  [e]
+  (when-let [original (selection nets)]
+    (when-let [net-copy (input "Enter a name for the Net-Copy")]
+      (simulator/copy-net original net-copy)
+      (config! nets :model (simulator/netnames)))))
+
 ;Main Area
 (defn -main [& args]
   (native!)
@@ -227,17 +232,33 @@
   (listen b-save-net :action l-save-net)
   (listen b-save-all :action l-save-all)
   (listen b-load-all :action l-load-all)
-  (listen b-remove-place :action l-remove-place)
   (listen b-fire-selected :action l-fire-selected)
   (listen b-fire-random :action l-fire-random)
-  (let [load-save-buttons (vertical-panel :border 15
+  (listen b-merge-nets :action l-merge-nets)
+  (listen b-copy-net :action l-copy-net)
+  (let [merge-copy-buttons (vertical-panel  :border 15
+                                            :items [b-merge-nets b-copy-net])
+        load-save-buttons (vertical-panel :border 15
                                           :items [b-create-net b-load-net b-load-all
                                                   b-save-net b-save-all])
         prop-buttons (vertical-panel :border 15
                                      :items [b-add-netalive b-add-transalive b-add-nonempty
                                              b-not-selected b-or-selected])
+        merge-instruction (text
+                           :text "When merging nets, the first 2
+selected Nets get merged.
+When merging, a prompt will
+ask you for the names
+ of equivalent transitions and places.
+Please enter them separated by comma.
+ Example: \"a,b,foo,bar\" (no spaces).
+Sets a equivalent to b and
+foo to bar.
+a and foo have to be from
+the first net and b and
+bar from the second." :multi-line? true :editable? false)
         layout (grid-panel :columns 4 :hgap 5 :vgap 3 :items
-                         [netbox load-save-buttons (label "") (label "")
+                         [netbox load-save-buttons merge-copy-buttons merge-instruction
                           placebox transbox in-edgebox out-edgebox
                           place-panel transition-panel pt-edge-panel tp-edge-panel
                           prop-buttons propertybox indicator-box])]
