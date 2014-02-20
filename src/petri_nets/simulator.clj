@@ -5,6 +5,32 @@
 ;; Which net is currently selected?
 ;; {:current netname}
 
+(defn current
+  "Return the currently selected net."
+  [] (@simstate :current))
+
+(defn netnames
+  "Return the names of all current existing nets."
+  [] (api/netnames))
+
+(defn all-places
+  "Return all places and their tokens of a net."
+  [net]
+  (((api/database) net) :places))
+
+(defn transitions
+  "Return all transitions."
+  [net]
+  (api/transitions net))
+
+(defn in-edges
+  [net]
+  (api/in-edges net))
+
+(defn out-edges
+  [net]
+  (api/out-edges net))
+
 (defn create-net
   "Create a new empty net."
   [netname]
@@ -37,10 +63,6 @@
   "Merge two nets, equivmap is a map of places and transitions that are equivalent in both nets."
   [net1 net2 equivmap newnet]
   (api/merge-nets net1 net2 equivmap newnet))
-
-(defn current
-  "Return the currently selected net."
-  [] (@simstate :current))
 
 (defn add-place
   "Add a place to the currently selected net."
@@ -94,8 +116,8 @@
 (defn load-net
   "Load a single net from a file. The Saved net can not have the same name
 as an allready existing net."
-  [file]
-  (api/load-net file))
+  [file net]
+  (api/load-net file net))
 
 (defn load-all
   "Load multiple nets from a single file. The Current nets will be overwritten."
@@ -116,30 +138,30 @@ as an allready existing net."
      (let [in-edges (api/in-edges net)
            filtered (get in-edges trans)
            mapped (map (fn [[place token]] (>= (- (tokens-in net place) token) 0)) filtered)]
-       (and (not (some false? mapped)) (not (empty? mapped))))))
-
-(defn fire
-  "Execute a transition in the selected net. If The Execution is not possible
-return nil. If no parameters are given a random fireable transition
-is executed."
-  ([]
-     (let [fireable (get (show-fireable!) (current))]
-       (if-not (empty? fireable)
-         (fire (rand-nth fireable)))))
-  ([trans]
-     (if (fireable? trans)
-       (let [ins (get (api/in-edges (current)) trans)
-             outs (get (api/out-edges (current)) trans)]
-         (doall (map (fn [[p t]] (remove-tokens p t)) ins))
-         (doall (map (fn [[p t]] (add-tokens p t)) outs)))
-       nil)))
+       (or (empty? filtered) (and (not (some false? mapped)) (not (empty? mapped)))))))
 
 (defn show-fireable!
   "Show all fireable transitions in a net. Without parameters the net is the currently selected."
   ([]
      (show-fireable! (current)))
   ([net]
-     {net (filter fireable? (api/transitions net))}))
+     {net (filter (partial fireable? net) (api/transitions net))}))
+
+(defn fire
+  "Execute a transition in the selected net. If The Execution is not possible
+return nil. If no trans parameter is given a random fireable transition
+is executed."
+  ([net]
+     (let [fireable (get (show-fireable! net) net)]
+       (if-not (empty? fireable)
+         (fire net (rand-nth fireable)))))
+  ([net trans]
+     (if (fireable? net trans)
+       (let [ins (get (api/in-edges net) trans)
+             outs (get (api/out-edges net) trans)]
+         (doall (map (fn [[p t]] (remove-tokens net p t)) ins))
+         (doall (map (fn [[p t]] (add-tokens net p t)) outs)))
+       nil)))
 
 (defn all-fireable!
   "Show all nets and their fireable transitions, organized in a map."
@@ -155,7 +177,7 @@ is executed."
   "Add the netalive property to the current net."
   ([] (add-netalive (current)))
   ([net]
-     (api/add-property net `(netalive ~net))))
+     (api/add-property net (str "(" 'petri-nets.simulator/netalive " " \" net \" ")" ))))
 
 (defn transitionalive
   "Checks if at least one of the in args specified transitions can be fired."
@@ -174,18 +196,41 @@ is executed."
   ([args] (add-transitionalive (current) args))
   ([net args]
      (if (clojure.set/subset? (set args) (api/transitions net))
-       (api/add-property net `(transitionalive ~net ~args)))))
+       (let [new-args (clojure.string/replace (str args) #"[()]" "")]
+         (api/add-property net (str "(" 'petri-nets.simulator/transitionalive " " \" net \" " [" new-args "])"))))))
 
 (defn add-nonempty
   "Add the nonempty property to the current net. args has to be a sequence."
   ([args] (add-nonempty (current) args))
   ([net args]
      (if (clojure.set/subset? (set args) (set (api/placenames net)))
-       (api/add-property net `(nonempty ~net ~args)))))
+       (let [new-args (clojure.string/replace (str (doall args)) #"[()]" "")]
+         (api/add-property net (str "(" 'petri-nets.simulator/nonempty " " \" net \" " [" new-args "])"))))))
 
 (defn add-property
   "Add a custom property to the net."
   ([property]
-     (add-property (current) property))
+     (add-property (current) (str property)))
   ([net property]
-     (api/add-property net property)))
+     (api/add-property net (str property))))
+
+(defn properties
+  "Show all properties of a net."
+  [net]
+  (api/properties net))
+
+(defn remove-place
+  [net place]
+  (api/remove-place net place))
+
+(defn remove-transition
+  [net trans]
+  (api/remove-transition net trans))
+
+(defn remove-place-trans-edge
+  [net place trans]
+  (api/remove-place-trans-edge net place trans))
+
+(defn remove-trans-place-edge
+  [net trans place]
+  (api/remove-trans-place-edge net trans place))

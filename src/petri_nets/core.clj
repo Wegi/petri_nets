@@ -1,11 +1,26 @@
 (ns petri-nets.core
-  (:gen-class))
+  (:require [clojure.walk] [clojure.set]))
 
 ;; WARNING: Program uses state. Keep a distance of 20 complexity Units
 ;; at all time
 
 (def net-db (atom {}))
 ; Database for nets
+
+;;Stolen function
+(defn dissoc-in
+  "Dissociates an entry from a nested associative structure returning a new
+  nested structure. keys is a sequence of keys. Any empty maps that result
+  will not be present in the new structure."
+  [m [k & ks :as keys]]
+  (if ks
+    (if-let [nextmap (get m k)]
+      (let [newmap (dissoc-in nextmap ks)]
+        (if (seq newmap)
+          (assoc m k newmap)
+          (dissoc m k)))
+      m)
+    (dissoc m k)))
 
 (defn clear-db
   "Reset the net-database."
@@ -193,7 +208,7 @@ and the value from net2."
 (defn save-net
   "Save 'net' to 'file'"
   [net file]
-  (spit file (net @net-db)))
+  (spit file (@net-db net)))
 
 (defn save-all
   "Saves all nets to file"
@@ -235,3 +250,23 @@ and the value from net2."
   "Add a property to the net. Op is the property function with the arguments args."
   [net property]
   (swap! net-db update-in [net :props] #(clojure.set/union % #{property})))
+
+(defn remove-place
+  "Remove a place from a net permanently."
+  [net place]
+  (swap! net-db dissoc-in [net :places place]))
+
+(defn remove-transition
+  "Remove a transition from a net permanently."
+  [net trans]
+  (swap! net-db dissoc-in [net :transitions trans]))
+
+(defn remove-place-trans-edge
+  "Remove an Edge permanently"
+  [net place trans]
+  (swap! net-db dissoc-in [net :edges-in trans place]))
+
+(defn remove-trans-place-edge
+  "remove an Edge permanently"
+  [net trans place]
+  (swap! net-db dissoc-in [net :edges-out trans place]))

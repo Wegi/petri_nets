@@ -47,7 +47,7 @@ present in the net nil is returned."
   [net place tokens]
   (if (some #{place} (core/placenames net))
     nil
-    (core/add-place net place tokens)))
+    (if (number? tokens) (core/add-place net place tokens))))
 
 (defn add-transition
   "Add a new transition to a net. If the transitions name is allready
@@ -92,9 +92,10 @@ If this particular edge is allready part of the net only the token number is cha
 (defn add-edge
   "Add a new edge to the net. If input is incorrect nil is returned."
   [net from to tokens]
-  (if (some #{from} (core/placenames net))
-    (add-place-trans-edge net from to tokens)
-    (add-trans-place-edge net from to tokens)))
+  (if (number? tokens)
+    (if (some #{from} (core/placenames net))
+      (add-place-trans-edge net from to tokens)
+      (add-trans-place-edge net from to tokens))))
 
 (defn save-net
   "Save a single net to file."
@@ -168,3 +169,29 @@ the loaded net is allready in use, return nil."
   [net]
   (if (some #{net} (core/netnames))
     (core/placenames net)))
+
+(defn remove-place
+  [net place]
+  (if (some #{net} (core/netnames))
+    (if (some #{place} (core/placenames net))
+      (core/remove-place net place))))
+
+(defn remove-transition
+  [net trans]
+  (if (some #{net} (core/netnames))
+    (if (some #{trans} (core/trans net))
+      (core/remove-transition net trans))))
+
+(defn remove-place-trans-edge
+  [net place trans]
+  (if (some #{net} (core/netnames))
+    (if (some #{trans} (core/trans net))
+      (if (some #{place} (core/placenames net))
+        (core/remove-place-trans-edge net place trans)))))
+
+(defn remove-trans-place-edge
+  [net place trans]
+  (if (some #{net} (core/netnames))
+    (if (some #{trans} (core/trans net))
+      (if (some #{place} (core/placenames net))
+        (core/remove-trans-place-edge net trans place)))))
