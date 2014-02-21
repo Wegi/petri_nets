@@ -76,6 +76,11 @@
   ([net transition]
      (api/add-transition net transition)))
 
+(defn remove-net
+  "Remove a net."
+  [net]
+  (api/remove-net net))
+
 (defn remove-tokens
   "Remove tokens from a place in the currently selected net."
   ([place x-tokens] (remove-tokens (current) place x-tokens))

@@ -31,6 +31,7 @@
 (def b-save-all (button :text "Save All"))
 (def b-merge-nets (button :text "Merge Nets"))
 (def b-copy-net (button :text "Copy Selected Net"))
+(def b-remove-net (button :text "Remove Selected Net"))
 
 (def b-add-place (button :text "Add Place"))
 (def place-panel (vertical-panel :items [b-add-place]))
@@ -49,8 +50,9 @@
 
 (def b-fire-selected (button :text "Fire Selected Transition"))
 (def b-fire-random (button :text "Fire Random transition"))
+(def b-fire-x (button :text "Fire x steps"))
 (def transition-panel (vertical-panel :items [b-add-transition
-                                              b-fire-selected b-fire-random]))
+                                              b-fire-selected b-fire-random b-fire-x]))
 
 (def prop-indicator (listbox))
 (def indicator-box (vertical-panel :items [(label "Property true or false")
@@ -188,12 +190,23 @@
       (l-update-boxes e)
       (run-properties net))))
 
+(defn fire-random
+  [net]
+  (simulator/fire net)
+  (l-update-boxes :foo)
+  (run-properties net))
+
 (defn l-fire-random
   [e]
   (when-let [net (selected-net)]
-    (simulator/fire net)
-    (l-update-boxes e)
-    (run-properties net)))
+    (fire-random net)))
+
+(defn l-fire-x
+  [e]
+  (when-let [net (selected-net)]
+    (when-let [in (read-string (input "How many step should be fired?"))]
+      (when (number? in)
+        (dotimes [n in] (fire-random net))))))
 
 (defn l-merge-nets
   [e]
@@ -213,6 +226,13 @@
     (when-let [net-copy (input "Enter a name for the Net-Copy")]
       (simulator/copy-net original net-copy)
       (config! nets :model (simulator/netnames)))))
+
+(defn l-remove-net
+  [e]
+  (when-let [net (selected-net)]
+    (simulator/remove-net net)
+    (config! nets :model (simulator/netnames))
+    (l-update-boxes e)))
 
 ;Main Area
 (defn -main [& args]
@@ -236,11 +256,13 @@
   (listen b-fire-random :action l-fire-random)
   (listen b-merge-nets :action l-merge-nets)
   (listen b-copy-net :action l-copy-net)
+  (listen b-remove-net :action l-remove-net)
+  (listen b-fire-x :action l-fire-x)
   (let [merge-copy-buttons (vertical-panel  :border 15
                                             :items [b-merge-nets b-copy-net])
         load-save-buttons (vertical-panel :border 15
                                           :items [b-create-net b-load-net b-load-all
-                                                  b-save-net b-save-all])
+                                                  b-save-net b-save-all b-remove-net])
         prop-buttons (vertical-panel :border 15
                                      :items [b-add-netalive b-add-transalive b-add-nonempty
                                              b-not-selected b-or-selected])
