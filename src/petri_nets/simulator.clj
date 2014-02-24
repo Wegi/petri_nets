@@ -224,19 +224,3 @@ a Vector with the property-funcion calls."
   "Show all properties of a net."
   [net]
   (api/properties net))
-
-(defn remove-place
-  [net place]
-  (api/remove-place net place))
-
-(defn remove-transition
-  [net trans]
-  (api/remove-transition net trans))
-
-(defn remove-place-trans-edge
-  [net place trans]
-  (api/remove-place-trans-edge net place trans))
-
-(defn remove-trans-place-edge
-  [net trans place]
-  (api/remove-trans-place-edge net trans place))

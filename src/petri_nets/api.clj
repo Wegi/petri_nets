@@ -176,29 +176,3 @@ the loaded net is allready in use, return nil."
   [net]
   (if (some #{net} (core/netnames))
     (core/placenames net)))
-
-(defn remove-place
-  [net place]
-  (if (some #{net} (core/netnames))
-    (if (some #{place} (core/placenames net))
-      (core/remove-place net place))))
-
-(defn remove-transition
-  [net trans]
-  (if (some #{net} (core/netnames))
-    (if (some #{trans} (core/trans net))
-      (core/remove-transition net trans))))
-
-(defn remove-place-trans-edge
-  [net place trans]
-  (if (some #{net} (core/netnames))
-    (if (some #{trans} (core/trans net))
-      (if (some #{place} (core/placenames net))
-        (core/remove-place-trans-edge net place trans)))))
-
-(defn remove-trans-place-edge
-  [net place trans]
-  (if (some #{net} (core/netnames))
-    (if (some #{trans} (core/trans net))
-      (if (some #{place} (core/placenames net))
-        (core/remove-trans-place-edge net trans place)))))

@@ -1,0 +1,1 @@
+{"traffic_light" {:places {"Orange" 0, "Green" 0, "Red" 1}, :transitions #{"T1" "T2" "T3"}, :edges-in {"T3" {"Orange" 1}, "T2" {"Green" 1}, "T1" {"Red" 1}}, :edges-out {"T3" {"Red" 1}, "T2" {"Orange" 1}, "T1" {"Green" 1}}, :props #{}}}

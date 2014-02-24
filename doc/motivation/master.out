@@ -1,8 +1,9 @@
 \BOOKMARK [1][-]{section.1}{Introduction}{}% 1
 \BOOKMARK [1][-]{section.2}{Data Structure}{}% 2
-\BOOKMARK [1][-]{section.3}{Implementation}{}% 3
-\BOOKMARK [2][-]{subsection.3.1}{Core module}{section.3}% 4
-\BOOKMARK [1][-]{section.4}{Results}{}% 5
-\BOOKMARK [1][-]{section.5}{Discussion}{}% 6
-\BOOKMARK [2][-]{subsection.5.1}{Subsection One}{section.5}% 7
-\BOOKMARK [2][-]{subsection.5.2}{Subsection Two}{section.5}% 8
+\BOOKMARK [1][-]{section.3}{Functionality}{}% 3
+\BOOKMARK [1][-]{section.4}{Implementation}{}% 4
+\BOOKMARK [2][-]{subsection.4.1}{Core module}{section.4}% 5
+\BOOKMARK [2][-]{subsection.4.2}{API}{section.4}% 6
+\BOOKMARK [2][-]{subsection.4.3}{Simulator}{section.4}% 7
+\BOOKMARK [2][-]{subsection.4.4}{GUI}{section.4}% 8
+\BOOKMARK [1][-]{section.5}{Refactorings}{}% 9

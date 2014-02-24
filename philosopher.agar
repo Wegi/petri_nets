@@ -1,0 +1,1 @@
+{"philosopher" {:places {"Eating" 1, "Thinking" 0}, :transitions #{"t1" "t2"}, :edges-in {"t1" {"Thinking" 1}, "t2" {"Eating" 1}}, :edges-out {"t1" {"Eating" 1}, "t2" {"Thinking" 1}}, :props #{}}}

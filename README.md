@@ -1,36 +1,14 @@
-# petri_nets
-
-FIXME: description
+# Agar
 
 ## Installation
 
-Download from http://example.com/FIXME.
+* Download the latest version from the Agar Github Repository
 
-## Usage
+1. Graphical Interface
+** To compile the .jar file with the interface use `lein uberjar`
+** Start the .jar with java -jar %OUTPUTTARGET%
 
-FIXME: explanation
-
-    $ java -jar petri_nets-0.1.0-standalone.jar [args]
-
-## Options
-
-FIXME: listing of options this app accepts.
-
-## Examples
-
-...
-
-### Bugs
-
-...
-
-### Any Other Sections
-### That You Think
-### Might be Useful
-
-## License
-
-Copyright © 2013 FIXME
-
-Distributed under the Eclipse Public License either version 1.0 or (at
-your option) any later version.
+2. REPL Simulator
+** To use the simulator in a REPL Session start the REPL with `lein repl`
+** input `require 'petri-nets.simulator
+** You're good to go to use the simulator

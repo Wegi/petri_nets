@@ -1,0 +1,1 @@
+{"Elevator" {:places {"P1" 0, "P2" 3}, :transitions #{"A1" "A2"}, :edges-in {"A1" {"P1" 1}, "A2" {"P2" 1}}, :edges-out {"A2" {"P1" 1}, "A1" {"P2" 1}}, :props #{}}}

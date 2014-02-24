@@ -1,5 +1,6 @@
 (ns petri-nets.core
-  (:require [clojure.walk] [clojure.set]))
+  (:require [clojure.walk] [clojure.set])
+  (:require clojure.string))
 
 ;; WARNING: Program uses state. Keep a distance of 20 complexity Units
 ;; at all time
@@ -263,23 +264,3 @@ and the value from net2."
   "Add a property to the net. Op is the property function with the arguments args."
   [net property]
   (swap! net-db update-in [net :props] #(clojure.set/union % #{property})))
-
-(defn remove-place
-  "Remove a place from a net permanently."
-  [net place]
-  (swap! net-db dissoc-in [net :places place]))
-
-(defn remove-transition
-  "Remove a transition from a net permanently."
-  [net trans]
-  (swap! net-db dissoc-in [net :transitions trans]))
-
-(defn remove-place-trans-edge
-  "Remove an Edge permanently"
-  [net place trans]
-  (swap! net-db dissoc-in [net :edges-in trans place]))
-
-(defn remove-trans-place-edge
-  "remove an Edge permanently"
-  [net trans place]
-  (swap! net-db dissoc-in [net :edges-out trans place]))
