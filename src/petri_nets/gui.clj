@@ -85,7 +85,8 @@
     (config! transitions :model (simulator/transitions net))
     (config! in-edges :model (simulator/in-edges net))
     (config! out-edges :model (simulator/out-edges net))
-    (config! properties :model (simulator/properties net))))
+    (config! properties :model (simulator/properties net))
+    (run-properties net)))
 
 (defn l-add-place
   [e]
@@ -258,6 +259,7 @@
   (listen b-copy-net :action l-copy-net)
   (listen b-remove-net :action l-remove-net)
   (listen b-fire-x :action l-fire-x)
+  
   (let [merge-copy-buttons (vertical-panel  :border 15
                                             :items [b-merge-nets b-copy-net])
         load-save-buttons (vertical-panel :border 15

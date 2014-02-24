@@ -95,6 +95,7 @@ in Clojure one of the main design paradigms was to keep Agar \textbf{Simple}.
 
 \begin{multicols}{2} % Two-column layout throughout the main article text
 
+
 \section{Introduction}
 
 \lettrine[nindent=0em,lines=3]{C} lojure is a programming language which has simplicity as one of its main paradigms.
@@ -105,6 +106,17 @@ With simplicity in mind Agar is divided into several Clojure files which fulfill
 in the following chapters. 
 
 %------------------------------------------------
+
+\section{Why Clojure?}
+As mentioned before the main paradigm Clojure is designed after is simplicity. For reference we can compare Clojure
+and Java for the purpose of creating an Petri net Simulator. In Java it would be a good Idea to use Interfaces and Object
+Oriented Programming as main guidelines for Programming. The State (mainly the State of the nets) could be handled in 
+the form of mutable Objects. One could design a net Object and let a Net-Collector Class handle the nets and the operations
+on them. The problem with this approach would be that statefull objects are introduced as components of a statefull class.
+The immutability of Clojure lends itself to the avoidance of state. All state can be handled in one atom and is therefore bundled 
+at one place, further simplifying the matter. \\
+This and the fact, that Clojure is simpler than Java by design are the main Reasons to use Clojure. Every Operation that should per Chance
+not be possible in Clojure could be handled trough Java Interop. 
 
 \section{Data Structure}
 The Data structure which is used to represent and save the petri-nets was developed, before the programming and
@@ -125,7 +137,7 @@ An Example data-structure looks like this:
 		:transitions #{"bam"}, 
 		:edges-in {"bam" {"baz" 1, "bar" 1}}, 
 		:edges-out {"bam" {"baz" 1}}, 
-		:props #{"(notalive "foo")"}}
+		:props #{"(petri-nets.simulator/netalive "foo")"}}
  "test2" {:places {"fizz" 9, buzz "10"},
  		  :transitions #{"fizzbuzz"},
  		  :edges-in {}
@@ -198,6 +210,15 @@ saved as a sequence which evaluates to a function call. Because of the nature of
 user the ability to operate on all possible properties with \texttt{or} and \texttt{not} through  mouse-clicks the
 representation changed. The new representation was a String representing the sequence that evaluates to a call
 executing the property functions. Because of that all property handling functions in the core had to be adapted to the new format.
+
+\section{Verification}
+The verification of the code was not done formally. To elaborate on the reasons for this:
+Rich Hickey, the creator of Clojure, stands on the point, that simple and well designed 
+programs do not need to be tested. (For further elaboration see his talk "Simple made Easy").
+It is our opinion, that agar fulfills both properties of being well designed and simple.
+The only not simple point, the merge function, was tested extensively through a lot of applications.
+Because merge-nets acts as an aggregator as mentioned before, formal testing is not needed in our 
+opinion. 
 %------------------------------------------------
 
 

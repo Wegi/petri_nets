@@ -12,3 +12,9 @@
 ** To use the simulator in a REPL Session start the REPL with `lein repl`
 ** input `require 'petri-nets.simulator
 ** You're good to go to use the simulator
+
+
+## Sample Files
+* elevator.agar
+* trafic_light.agar
+* philosopher.agar

@@ -1,9 +1,11 @@
 \BOOKMARK [1][-]{section.1}{Introduction}{}% 1
-\BOOKMARK [1][-]{section.2}{Data Structure}{}% 2
-\BOOKMARK [1][-]{section.3}{Functionality}{}% 3
-\BOOKMARK [1][-]{section.4}{Implementation}{}% 4
-\BOOKMARK [2][-]{subsection.4.1}{Core module}{section.4}% 5
-\BOOKMARK [2][-]{subsection.4.2}{API}{section.4}% 6
-\BOOKMARK [2][-]{subsection.4.3}{Simulator}{section.4}% 7
-\BOOKMARK [2][-]{subsection.4.4}{GUI}{section.4}% 8
-\BOOKMARK [1][-]{section.5}{Refactorings}{}% 9
+\BOOKMARK [1][-]{section.2}{Why Clojure?}{}% 2
+\BOOKMARK [1][-]{section.3}{Data Structure}{}% 3
+\BOOKMARK [1][-]{section.4}{Functionality}{}% 4
+\BOOKMARK [1][-]{section.5}{Implementation}{}% 5
+\BOOKMARK [2][-]{subsection.5.1}{Core module}{section.5}% 6
+\BOOKMARK [2][-]{subsection.5.2}{API}{section.5}% 7
+\BOOKMARK [2][-]{subsection.5.3}{Simulator}{section.5}% 8
+\BOOKMARK [2][-]{subsection.5.4}{GUI}{section.5}% 9
+\BOOKMARK [1][-]{section.6}{Refactorings}{}% 10
+\BOOKMARK [1][-]{section.7}{Verification}{}% 11
